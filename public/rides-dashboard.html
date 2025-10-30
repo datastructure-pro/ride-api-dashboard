@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Rides Dashboard</title>
+  <style>
+    body { font-family: Arial; margin: 40px; background: #f9f9f9; }
+    h1 { color: #333; }
+    table { border-collapse: collapse; width: 100%; margin-top: 20px; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+    th { background: #eee; }
+    form { margin: 20px 0; }
+    input, button { padding: 8px; margin: 4px; }
+    .btn { cursor: pointer; border: none; padding: 6px 10px; border-radius: 4px; }
+    .btn-edit { background: #ffb300; color: white; }
+    .btn-delete { background: #e74c3c; color: white; }
+  </style>
+</head>
+<body>
+
+  <h1>Rides Dashboard</h1>
+
+  <form id="rideForm">
+    <input type="text" id="pickupLocation" placeholder="Pickup Location" required />
+    <input type="text" id="destination" placeholder="Destination" required />
+    <input type="text" id="driverId" placeholder="Driver ID" required />
+    <button type="submit">Add Ride</button>
+  </form>
+
+  <table id="ridesTable">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Pickup</th>
+        <th>Destination</th>
+        <th>Driver</th>
+        <th>Status</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script>
+    const API_URL = "http://localhost:3000/rides";
+
+    async function fetchRides() {
+      const res = await fetch(API_URL);
+      const rides = await res.json();
+      const tbody = document.querySelector("#ridesTable tbody");
+      tbody.innerHTML = "";
+
+      rides.forEach(ride => {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${ride._id || ""}</td>
+          <td>${ride.pickupLocation}</td>
+          <td>${ride.destination}</td>
+          <td>${ride.driverId}</td>
+          <td>${ride.status}</td>
+          <td>
+            <button class="btn btn-edit" onclick="updateRide('${ride._id}')">Cancel</button>
+            <button class="btn btn-delete" onclick="deleteRide('${ride._id}')">Delete</button>
+          </td>`;
+        tbody.appendChild(row);
+      });
+    }
+
+    document.getElementById("rideForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const data = {
+        pickupLocation: pickupLocation.value,
+        destination: destination.value,
+        driverId: driverId.value,
+        status: "requested"
+      };
+      await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data)
+      });
+      e.target.reset();
+      fetchRides();
+    });
+
+    async function updateRide(id) {
+      await fetch(`${API_URL}/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "cancelled" })
+      });
+      fetchRides();
+    }
+
+    async function deleteRide(id) {
+      await fetch(`${API_URL}/${id}`, { method: "DELETE" });
+      fetchRides();
+    }
+
+    fetchRides();
+  </script>
+
+</body>
+</html>
